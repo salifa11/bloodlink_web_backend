@@ -5,13 +5,29 @@ import User from "../model/userModel.js";
 // Login
 export const login = async (req, res) => {
   try {
+    console.log("=== LOGIN REQUEST ===");
+    console.log("Request body:", req.body);
+    
     const { email, password } = req.body;
+    
+    console.log("Email:", email);
+    console.log("Password received:", password ? "Yes" : "No");
 
     const user = await User.findOne({ where: { userEmail: email } });
-    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+    console.log("User found:", user ? "Yes" : "No");
+    
+    if (!user) {
+      console.log("User not found in database");
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.userPassword);
-    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
+    console.log("Password match:", isMatch);
+    
+    if (!isMatch) {
+      console.log("Password does not match");
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
 
     const token = jwt.sign(
       { id: user.id, email: user.userEmail },
@@ -19,7 +35,11 @@ export const login = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
-    res.status(200).json({ 
+    console.log("Token generated:", token);
+    console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
+    console.log("JWT_EXPIRES_IN:", process.env.JWT_EXPIRES_IN);
+
+    const response = {
       message: "Login successful", 
       token,
       user: {
@@ -27,8 +47,14 @@ export const login = async (req, res) => {
         email: user.userEmail,
         name: user.userName
       }
-    });
+    };
+
+    console.log("Sending response:", response);
+    console.log("===================");
+
+    res.status(200).json(response);
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -36,6 +62,9 @@ export const login = async (req, res) => {
 // Register
 export const register = async (req, res) => {
   try {
+    console.log("=== REGISTER REQUEST ===");
+    console.log("Request body:", req.body);
+    
     const { email, password, name } = req.body;
 
     if (!email || !password) {
@@ -50,8 +79,11 @@ export const register = async (req, res) => {
     const newUser = await User.create({
       userEmail: email,
       userPassword: hashedPassword,
-      userName: name || null,  // Add this line
+      userName: name || null,
     });
+
+    console.log("User registered:", newUser.userEmail);
+    console.log("=======================");
 
     res.status(201).json({ 
       message: "Registration successful", 
@@ -62,6 +94,7 @@ export const register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("Register error:", error);
     res.status(500).json({ message: error.message });
   }
 };
