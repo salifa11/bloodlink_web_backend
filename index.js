@@ -4,6 +4,7 @@ import cors from "cors";
 
 import { connection } from "./src/Database/db.js";
 import authRouter from "./src/route/authRoute.js";
+import profileRoute from "./src/route/profileRoute.js";
 
 dotenv.config();
 
@@ -24,7 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
-
+app.use("/api/profile", profileRoute);
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
