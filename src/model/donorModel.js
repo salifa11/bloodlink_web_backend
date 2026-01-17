@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../Database/db.js"; // Ensure this path matches your db config
+import sequelize from "../Database/db.js"; // Path to your db config
 
 const Donor = sequelize.define("donor_registered", {
   id: {
@@ -24,6 +24,11 @@ const Donor = sequelize.define("donor_registered", {
     allowNull: false,
   },
   bloodGroup: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  // New field to store the selected hospital
+  hospital: {
     type: DataTypes.STRING,
     allowNull: false,
   }

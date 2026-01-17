@@ -9,6 +9,8 @@ import authRouter from "./src/route/authRoute.js";
 import profileRoute from "./src/route/profileRoute.js";
 import donorRoute from "./src/route/donorRoute.js";
 import { createUploadsFolder } from "./src/security/helper.js";
+import eventRoute from "./src/route/eventRoute.js";
+import applicationRoute from "./src/route/applicationRoute.js";
 
 dotenv.config();
 
@@ -38,6 +40,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/profile", profileRoute);
 app.use("/api/donor", donorRoute);
+app.use("/api/events", eventRoute);
+app.use("/api/applications", applicationRoute);
 
 createUploadsFolder();
 
