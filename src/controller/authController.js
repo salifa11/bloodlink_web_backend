@@ -29,27 +29,30 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // UPDATED: Include role in JWT payload
     const token = jwt.sign(
-      { id: user.id, email: user.userEmail },
+      { id: user.id, email: user.userEmail, role: user.role }, 
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
-    console.log("Token generated:", token);
+    console.log("Token generated with role:", user.role);
     console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
     console.log("JWT_EXPIRES_IN:", process.env.JWT_EXPIRES_IN);
 
+    // UPDATED: Include role in the response user object
     const response = {
       message: "Login successful", 
       token,
       user: {
         id: user.id,
         email: user.userEmail,
-        name: user.userName
+        name: user.userName,
+        role: user.role 
       }
     };
 
-    console.log("Sending response:", response);
+    console.log("Sending response with role:", user.role);
     console.log("===================");
 
     res.status(200).json(response);
@@ -76,6 +79,7 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // New users default to 'user' role based on the model definition
     const newUser = await User.create({
       userEmail: email,
       userPassword: hashedPassword,
@@ -90,7 +94,8 @@ export const register = async (req, res) => {
       user: {
         id: newUser.id,
         email: newUser.userEmail,
-        name: newUser.userName
+        name: newUser.userName,
+        role: newUser.role // Include default role in registration response
       }
     });
   } catch (error) {

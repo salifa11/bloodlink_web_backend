@@ -23,6 +23,12 @@ const User = sequelize.define("User", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  // ADD THIS FIELD FOR MULTER
+  image: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
+  },
   phone: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -42,7 +48,7 @@ const User = sequelize.define("User", {
   bloodGroup: {
     type: DataTypes.STRING,
     allowNull: true,
-    field: 'bloodgroup'  // Map bloodGroup -> bloodgroup
+    field: 'bloodgroup'
   },
   totalDonations: {
     type: DataTypes.INTEGER,
@@ -51,12 +57,12 @@ const User = sequelize.define("User", {
     validate: {
       min: 0,
     },
-    field: 'totaldonations'  // Map totalDonations -> totaldonations
+    field: 'totaldonations'
   },
   lastDonation: {
     type: DataTypes.STRING,
     allowNull: true,
-    field: 'lastdonation'  // Map lastDonation -> lastdonation
+    field: 'lastdonation'
   },
   role: {
     type: DataTypes.STRING,

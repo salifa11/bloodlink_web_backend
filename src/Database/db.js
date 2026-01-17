@@ -1,21 +1,4 @@
-// import { Sequelize } from "sequelize";
 
-// export const sequelize = new Sequelize("postgres", "postgres", "postgres", {
-//     host: "localhost",
-//     dialect: "postgres",
-// });
-
-// export const connection = async () => {
-//     try {
-//         await sequelize.authenticate(); // checks DB connection
-//         await sequelize.sync();         // ensures models are synced
-//         console.log("Database connected successfully");
-//     } catch (e) {
-//         console.error("Database connection failed:", e);
-//     }
-// };
-
-// src/database/db.js
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 
