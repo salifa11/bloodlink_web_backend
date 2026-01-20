@@ -1,12 +1,20 @@
-// salifa11/bloodlink_web_backend/src/route/donorRoute.js
 import express from "express";
-import { registerDonor , getAllDonors } from "../controller/donorController.js";
+import { 
+    registerDonor, 
+    getAllDonors, 
+    updateDonorStatus, 
+    getAvailableDonors // Ensure this is imported
+} from "../controller/donorController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// This route handles the POST request from your "Register as Donor" button
+// User Routes
 router.post("/register", verifyToken, registerDonor);
+router.get("/available", verifyToken, getAvailableDonors); // Endpoint for Blood Banks view
+
+// Admin Routes
 router.get("/admin/all", verifyToken, getAllDonors);
+router.put("/status/:id", verifyToken, updateDonorStatus);
 
 export default router;

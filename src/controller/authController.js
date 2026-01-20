@@ -103,3 +103,31 @@ export const register = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// --- NEW: Add this Get Profile function ---
+export const getProfile = async (req, res) => {
+  try {
+    // req.user.id is populated by your verifyToken middleware
+    const user = await User.findByPk(req.user.id, {
+      attributes: [
+        'id', 
+        'userName',      // Matches camelCase in pgAdmin
+        'userEmail', 
+        'bloodgroup',    // Matches lowercase in pgAdmin
+        'totaldonations',// Matches lowercase in pgAdmin
+        'lastdonation'   // Matches lowercase in pgAdmin
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Sequelize will return the data as it is stored in the database
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+

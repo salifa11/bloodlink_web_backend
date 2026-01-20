@@ -12,14 +12,26 @@ import { createUploadsFolder } from "./src/security/helper.js";
 import eventRoute from "./src/route/eventRoute.js";
 import applicationRoute from "./src/route/applicationRoute.js";
 
+// IMPORT MODELS FOR ASSOCIATIONS
+import User from "./src/model/userModel.js";
+import Event from "./src/model/eventModel.js";
+import Application from "./src/model/applicationModel.js";
+
 dotenv.config();
 
-// Resolve __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// --- DEFINE ASSOCIATIONS HERE ---
+// These allow you to fetch User and Event names in the Admin panel
+User.hasMany(Application, { foreignKey: 'userId' });
+Application.belongsTo(User, { foreignKey: 'userId' });
+
+Event.hasMany(Application, { foreignKey: 'eventId' });
+Application.belongsTo(Event, { foreignKey: 'eventId' });
 
 app.use(cors({
   origin: "http://localhost:5173",
@@ -27,11 +39,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// Serve the uploads folder publicly so images can be accessed by URL
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-connection();
+connection(); // Database connection handles sequelize.sync()
 
 app.get("/", (req, res) => {
   res.send("Backend running");
@@ -42,6 +52,7 @@ app.use("/api/profile", profileRoute);
 app.use("/api/donor", donorRoute);
 app.use("/api/events", eventRoute);
 app.use("/api/applications", applicationRoute);
+
 
 createUploadsFolder();
 

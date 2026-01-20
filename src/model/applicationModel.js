@@ -1,5 +1,7 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../Database/db.js";
+import User from "./userModel.js"; 
+import Event from "./eventModel.js";
 
 const Application = sequelize.define("event_applications", {
   id: {
@@ -10,10 +12,12 @@ const Application = sequelize.define("event_applications", {
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: { model: User, key: 'id' }
   },
   eventId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: { model: Event, key: 'id' }
   },
   applicationType: {
     type: DataTypes.ENUM('donor', 'volunteer'),
@@ -21,11 +25,14 @@ const Application = sequelize.define("event_applications", {
   },
   status: {
     type: DataTypes.STRING,
-    defaultValue: 'pending', // Can be 'pending', 'approved', or 'rejected'
+    defaultValue: 'pending', 
   }
 }, {
-  // This ensures a user can't apply twice for the same event
   indexes: [{ unique: true, fields: ['userId', 'eventId'] }]
 });
+
+// ALIASES: These fix the "N/A" by naming the objects 'user' and 'event'
+Application.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Application.belongsTo(Event, { foreignKey: 'eventId', as: 'event' });
 
 export default Application;
