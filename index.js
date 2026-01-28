@@ -16,6 +16,7 @@ import applicationRoute from "./src/route/applicationRoute.js";
 import User from "./src/model/userModel.js";
 import Event from "./src/model/eventModel.js";
 import Application from "./src/model/applicationModel.js";
+import Donor from "./src/model/donorModel.js";
 
 dotenv.config();
 
@@ -32,6 +33,9 @@ Application.belongsTo(User, { foreignKey: 'userId' });
 
 Event.hasMany(Application, { foreignKey: 'eventId' });
 Application.belongsTo(Event, { foreignKey: 'eventId' });
+
+User.hasMany(Donor, { foreignKey: 'userId' });
+Donor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 app.use(cors({
   origin: "http://localhost:5173",

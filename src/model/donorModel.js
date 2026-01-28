@@ -5,30 +5,66 @@ import User from "./userModel.js";
 const Donor = sequelize.define("donor_registered", {
   id: {
     type: DataTypes.INTEGER,
-    autoIncrement: true,
     primaryKey: true,
+    autoIncrement: true,
   },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: { model: User, key: 'id' } // Link to Users table
+    field: 'user_id',
+    references: {
+      model: User,
+      key: "id",
+    },
   },
-  phone: { type: DataTypes.STRING, allowNull: false },
-  city: { type: DataTypes.STRING, allowNull: false },
-  age: { type: DataTypes.INTEGER, allowNull: false },
-  bloodGroup: { type: DataTypes.STRING, allowNull: false }, // Matches pgAdmin
-  hospital: { type: DataTypes.STRING, allowNull: false },
-  // Status field for availability toggle
+  phone: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'phone',
+  },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'city',
+  },
+  age: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'age',
+    validate: {
+      min: 18,
+      max: 100,
+    },
+  },
+  bloodGroup: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'bloodgroup',
+  },
+  hospital: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'hospital',
+  },
   status: {
-    type: DataTypes.ENUM('available', 'unavailable'),
-    defaultValue: 'available',
-    allowNull: false
-  }
+    type: DataTypes.STRING,
+    allowNull: false,
+    field: 'status',
+    defaultValue: "available",
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    field: 'createdat',
+    defaultValue: DataTypes.NOW,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    field: 'updatedat',
+    defaultValue: DataTypes.NOW,
+  },
 }, {
-  freezeTableName: true 
+  tableName: "donor_registered",
+  timestamps: false,
 });
-
-// Association for JOIN queries to fetch Full Names
-Donor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 export default Donor;

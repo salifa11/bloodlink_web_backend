@@ -5,17 +5,39 @@ import User from "../model/userModel.js";
 export const registerDonor = async (req, res) => {
   try {
     const { phone, city, age, bloodGroup, hospital } = req.body;
+    
+    // Validation
+    if (!phone || !city || !age || !bloodGroup) {
+      return res.status(400).json({ 
+        message: "Missing required fields: phone, city, age, bloodGroup" 
+      });
+    }
+
+    // Ensure age is a number
+    const ageNum = parseInt(age, 10);
+    if (isNaN(ageNum) || ageNum < 18 || ageNum > 100) {
+      return res.status(400).json({ 
+        message: "Age must be a valid number between 18 and 100" 
+      });
+    }
+
+    console.log("Register Donor - User ID:", req.user?.id);
+    console.log("Register Donor - Body:", req.body);
+    
     const newDonor = await Donor.create({
       userId: req.user.id,
-      phone,
-      city,
-      age,
-      bloodGroup,
-      hospital,
+      phone: phone.trim(),
+      city: city.trim(),
+      age: ageNum,
+      bloodGroup: bloodGroup.trim(),
+      hospital: hospital ? hospital.trim() : null,
       status: 'available'
     });
+    
     res.status(201).json({ message: "Registered successfully!", donor: newDonor });
   } catch (error) {
+    console.error("Register Donor Error:", error.message);
+    console.error("Stack:", error.stack);
     res.status(500).json({ message: "Registration failed", error: error.message });
   }
 };

@@ -103,19 +103,17 @@ export const register = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// --- NEW: Add this Get Profile function ---
 export const getProfile = async (req, res) => {
   try {
-    // req.user.id is populated by your verifyToken middleware
     const user = await User.findByPk(req.user.id, {
       attributes: [
         'id', 
-        'userName',      // Matches camelCase in pgAdmin
-        'userEmail', 
-        'bloodgroup',    // Matches lowercase in pgAdmin
-        'totaldonations',// Matches lowercase in pgAdmin
-        'lastdonation'   // Matches lowercase in pgAdmin
+        'userName',        // Already camelCase in DB
+        'userEmail',       // Already camelCase in DB
+        'bloodGroup',      // Sequelize maps this to 'bloodgroup'
+        'totalDonations',  // Sequelize maps this to 'totaldonations'
+        'lastDonation',    // Sequelize maps this to 'lastdonation'
+        'image'            // Optional: if you want to show profile picture
       ]
     });
 
@@ -123,11 +121,22 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Sequelize will return the data as it is stored in the database
-    res.status(200).json(user);
+    // Convert Sequelize instance to plain object with camelCase keys
+    const userData = {
+      id: user.id,
+      userName: user.userName,
+      userEmail: user.userEmail,
+      bloodGroup: user.bloodGroup,           // Now returns camelCase
+      totalDonations: user.totalDonations,   // Now returns camelCase
+      lastDonation: user.lastDonation,       // Now returns camelCase
+      image: user.image
+    };
+
+    console.log("Profile data being sent:", userData); // Debug log
+
+    res.status(200).json(userData);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
-
