@@ -34,7 +34,11 @@ Application.belongsTo(User, { foreignKey: 'userId' });
 Event.hasMany(Application, { foreignKey: 'eventId' });
 Application.belongsTo(Event, { foreignKey: 'eventId' });
 
-User.hasMany(Donor, { foreignKey: 'userId' });
+// User.hasMany(Donor, { foreignKey: 'userId' });
+// Donor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// index.js
+User.hasMany(Donor, { foreignKey: 'userId', as: 'donors' });
 Donor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 app.use(cors({

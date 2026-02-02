@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../model/userModel.js";
+import Donor from "../model/donorModel.js";
 
 // Login
 export const login = async (req, res) => {
@@ -29,7 +30,7 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // UPDATED: Include role in JWT payload
+    // Include role in JWT payload
     const token = jwt.sign(
       { id: user.id, email: user.userEmail, role: user.role }, 
       process.env.JWT_SECRET,
@@ -40,7 +41,7 @@ export const login = async (req, res) => {
     console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
     console.log("JWT_EXPIRES_IN:", process.env.JWT_EXPIRES_IN);
 
-    // UPDATED: Include role in the response user object
+    // Include role in the response user object
     const response = {
       message: "Login successful", 
       token,
@@ -95,7 +96,7 @@ export const register = async (req, res) => {
         id: newUser.id,
         email: newUser.userEmail,
         name: newUser.userName,
-        role: newUser.role // Include default role in registration response
+        role: newUser.role
       }
     });
   } catch (error) {
@@ -103,17 +104,23 @@ export const register = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get Profile
 export const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
       attributes: [
         'id', 
-        'userName',        // Already camelCase in DB
-        'userEmail',       // Already camelCase in DB
-        'bloodGroup',      // Sequelize maps this to 'bloodgroup'
-        'totalDonations',  // Sequelize maps this to 'totaldonations'
-        'lastDonation',    // Sequelize maps this to 'lastdonation'
-        'image'            // Optional: if you want to show profile picture
+        'userName',
+        'userEmail',
+        'bloodGroup',
+        'totalDonations',
+        'lastDonation',
+        'image',
+        'phone',
+        'location',
+        'age',
+        'role'
       ]
     });
 
@@ -121,22 +128,99 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Convert Sequelize instance to plain object with camelCase keys
     const userData = {
       id: user.id,
       userName: user.userName,
       userEmail: user.userEmail,
-      bloodGroup: user.bloodGroup,           // Now returns camelCase
-      totalDonations: user.totalDonations,   // Now returns camelCase
-      lastDonation: user.lastDonation,       // Now returns camelCase
-      image: user.image
+      bloodGroup: user.bloodGroup,
+      totalDonations: user.totalDonations,
+      lastDonation: user.lastDonation,
+      image: user.image,
+      phone: user.phone,
+      location: user.location,
+      age: user.age,
+      role: user.role
     };
 
-    console.log("Profile data being sent:", userData); // Debug log
+    console.log("Profile data being sent:", userData);
 
     res.status(200).json(userData);
   } catch (error) {
     console.error("Profile fetch error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete User (Admin only) - IMPROVED VERSION
+export const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(`🗑️ DELETE REQUEST - User ID: ${userId}`);
+    console.log(`👤 Requester ID: ${req.user.id}, Role: ${req.user.role}`);
+
+    // SECURITY CHECK 1: Verify admin role
+    if (req.user.role !== 'admin') {
+      console.log("❌ Access denied - Not an admin");
+      return res.status(403).json({ message: "Access denied. Admin only." });
+    }
+
+    // SECURITY CHECK 2: Prevent self-deletion
+    if (parseInt(userId) === req.user.id) {
+      console.log("❌ Cannot delete own account");
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    // Check if user exists
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.log("❌ User not found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // SECURITY CHECK 3: Prevent deleting other admins (optional)
+    if (user.role === 'admin') {
+      console.log("❌ Cannot delete admin users");
+      return res.status(403).json({ message: "Cannot delete admin users" });
+    }
+
+    console.log(`📋 User to delete: ${user.userName} (${user.userEmail})`);
+
+    // CASCADE DELETE - Delete all related records first
+    try {
+      // 1. Delete donor registrations
+      const donorCount = await Donor.destroy({ where: { userId } });
+      console.log(`🗑️ Deleted ${donorCount} donor record(s)`);
+
+      // 2. Delete event applications (if you have this model)
+      // const appCount = await Application.destroy({ where: { userId } });
+      // console.log(`🗑️ Deleted ${appCount} application(s)`);
+
+      // Add more related model deletions here as needed
+
+    } catch (cascadeError) {
+      console.error("⚠️ Error during cascade deletion:", cascadeError);
+      // Continue with user deletion even if cascade fails
+    }
+
+    // 3. Finally, delete the user
+    await User.destroy({ where: { id: userId } });
+
+    console.log(`✅ User ${userId} deleted successfully`);
+    
+    res.status(200).json({ 
+      message: "User deleted successfully",
+      deletedUser: {
+        id: user.id,
+        userName: user.userName,
+        userEmail: user.userEmail
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Delete user error:", error);
+    res.status(500).json({ 
+      message: "Server error while deleting user",
+      error: error.message 
+    });
   }
 };
