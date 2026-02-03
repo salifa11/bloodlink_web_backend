@@ -59,3 +59,74 @@ export const getEventById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+/**
+ * DELETE EVENT BY ID (Admin only)
+ */
+export const deleteEvent = async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    const { id } = req.params;
+
+    // Find the event
+    const event = await Event.findByPk(id);
+
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Store event details before deletion
+    const deletedEventName = event.eventName;
+
+    // Delete the event
+    await Event.destroy({ where: { id } });
+
+    res.status(200).json({ 
+      message: "Event deleted successfully",
+      deletedEvent: {
+        id: id,
+        eventName: deletedEventName
+      }
+    });
+  } catch (error) {
+    console.error("Delete event error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+/**
+ * UPDATE EVENT BY ID (Admin only)
+ */
+export const updateEvent = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    const { id } = req.params;
+
+    const event = await Event.findByPk(id);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const updateData = {
+      ...req.body,
+      eventImage: req.file ? `/uploads/${req.file.filename}` : event.eventImage
+    };
+
+    await event.update(updateData);
+
+    res.status(200).json({ 
+      message: "Event updated successfully",
+      event
+    });
+  } catch (error) {
+    console.error("Update event error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
