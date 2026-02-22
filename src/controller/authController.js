@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../model/userModel.js";
 import Donor from "../model/donorModel.js";
+import { sendMail } from "../security/mailer.js";
 
 // Login
 export const login = async (req, res) => {
@@ -71,8 +72,38 @@ export const register = async (req, res) => {
     
     const { email, password, name } = req.body;
 
+    // Validation: Check if email and password are provided
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Validation: Check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Please provide a valid email address" });
+    }
+
+    // Password validation - same as reset password
+    const passwordErrors = [];
+
+    if (password.length < 8) {
+      passwordErrors.push("At least 8 characters");
+    }
+    if (!/[A-Z]/.test(password)) {
+      passwordErrors.push("One uppercase letter (A-Z)");
+    }
+    if (!/[0-9]/.test(password)) {
+      passwordErrors.push("One number (0-9)");
+    }
+    if (!/[!@#$%&*]/.test(password)) {
+      passwordErrors.push("One special character (!@#$%&*)");
+    }
+
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({ 
+        message: "Password does not meet requirements",
+        requirements: passwordErrors 
+      });
     }
 
     const existing = await User.findOne({ where: { userEmail: email } });
@@ -233,5 +264,81 @@ export const deleteUser = async (req, res) => {
       message: "Server error while deleting user",
       error: error.message 
     });
+  }
+};
+
+// Request password reset - generates a time-limited token and returns a reset link
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ where: { userEmail: email } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Create a short-lived token (1 hour)
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Construct a frontend reset URL (frontend should have a route to accept token)
+    const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetUrl = `${frontend}/reset-password?token=${token}`;
+
+    // Attempt to send the reset URL by email
+    let emailSent = false;
+    try {
+      await sendMail({
+        to: user.userEmail,
+        subject: 'Bloodlink Password Reset',
+        html: `
+          <p>Hello ${user.userName || ''},</p>
+          <p>You requested a password reset for your Bloodlink account. Click the link below to reset your password. This link expires in 1 hour.</p>
+          <p><a href="${resetUrl}">Reset your password</a></p>
+          <p>If you didn't request this, please ignore this email.</p>
+        `
+      });
+      emailSent = true;
+    } catch (mailErr) {
+      console.error('Failed to send reset email:', mailErr);
+      emailSent = false;
+    }
+
+    // In production do not return the token in the response; rely on email delivery.
+    const isProd = process.env.NODE_ENV === 'production';
+    if (isProd) {
+      if (!emailSent) return res.status(500).json({ message: 'Failed to send reset email' });
+      return res.status(200).json({ message: 'Password reset link sent to your email' });
+    }
+
+    // Development: return link in response to make testing easier
+    return res.status(200).json({ message: 'Password reset link generated', resetUrl, emailSent });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Reset password using token from the reset link
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ message: 'Token and newPassword are required' });
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    const user = await User.findByPk(payload.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.update({ userPassword: hashed }, { where: { id: user.id } });
+
+    return res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 };
