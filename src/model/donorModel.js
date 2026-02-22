@@ -12,7 +12,7 @@ const Donor = sequelize.define("donor_registered", {
     type: DataTypes.INTEGER, 
     allowNull: false, 
     field: 'userId', // Database column name is 'userId' (camelCase)
-    unique: true, // Prevent duplicate registrations
+    // Removed unique: true to allow multiple registrations per user
     references: { 
       model: User, 
       key: "id" 

@@ -23,12 +23,8 @@ export const registerDonor = async (req, res) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    // Check if already registered
-    const existing = await Donor.findOne({ where: { userId: req.user.id } });
-    if (existing) {
-      console.log("⚠️ User already registered as donor");
-      return res.status(400).json({ message: "You are already registered as a donor" });
-    }
+    // Allow multiple registrations per user
+    console.log("✅ Multiple registrations allowed");
 
     // Validate age
     const ageNum = parseInt(age, 10);

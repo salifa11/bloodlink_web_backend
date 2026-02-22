@@ -193,6 +193,89 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// Update Profile
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const {
+      userName,
+      userEmail,
+      phone,
+      location,
+      age,
+      bloodGroup
+    } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Prevent duplicate emails if email is being updated
+    if (userEmail && userEmail !== user.userEmail) {
+      const existingUser = await User.findOne({ 
+        where: { userEmail: userEmail } 
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already in use" });
+      }
+    }
+
+    // Consolidate update data
+    const updateData = {};
+    if (userName !== undefined) updateData.userName = userName;
+    if (userEmail !== undefined) updateData.userEmail = userEmail;
+    if (phone !== undefined) updateData.phone = phone;
+    if (location !== undefined) updateData.location = location;
+    if (age !== undefined) updateData.age = age;
+    if (bloodGroup !== undefined) updateData.bloodGroup = bloodGroup;
+
+    await user.update(updateData);
+
+    const updatedUser = await User.findByPk(userId, {
+      attributes: { exclude: ['userPassword'] }
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Update Profile Image
+export const updateProfileImage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided" });
+    }
+
+    // Path string to store in the database
+    const imagePath = `/uploads/${req.file.filename}`;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update the image column in the database
+    await user.update({ image: imagePath });
+
+    res.status(200).json({
+      message: "Profile image updated successfully",
+      imageUrl: imagePath
+    });
+  } catch (error) {
+    console.error("Error updating profile image:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // Delete User (Admin only) - IMPROVED VERSION
 export const deleteUser = async (req, res) => {
   try {
