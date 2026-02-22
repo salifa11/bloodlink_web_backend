@@ -114,8 +114,6 @@ export const getProfile = async (req, res) => {
         'userName',
         'userEmail',
         'bloodGroup',
-        'totalDonations',
-        'lastDonation',
         'image',
         'phone',
         'location',
@@ -128,13 +126,26 @@ export const getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Compute donation stats live from Donor table
+    const donorRecords = await Donor.findAll({ 
+      where: { userId: req.user.id },
+      attributes: ['createdAt']
+    });
+
+    const totalDonations = donorRecords.length;
+    
+    // Get the most recent donation date (latest createdAt)
+    const lastDonation = donorRecords.length > 0
+      ? new Date(Math.max(...donorRecords.map(d => new Date(d.createdAt)))).toISOString().split('T')[0]
+      : null;
+
     const userData = {
       id: user.id,
       userName: user.userName,
       userEmail: user.userEmail,
       bloodGroup: user.bloodGroup,
-      totalDonations: user.totalDonations,
-      lastDonation: user.lastDonation,
+      totalDonations: totalDonations,
+      lastDonation: lastDonation,
       image: user.image,
       phone: user.phone,
       location: user.location,

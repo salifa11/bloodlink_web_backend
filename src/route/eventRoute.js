@@ -24,4 +24,7 @@ router.get("/:id", getEventById);
 // DELETE EVENT (Admin only)
 router.delete("/:id", verifyToken, deleteEvent);
 
+// UPDATE EVENT (Admin only)
+router.put("/:id", verifyToken, upload.single("eventImage"), updateEvent);
+
 export default router;
