@@ -11,12 +11,14 @@ import donorRoute from "./src/route/donorRoute.js";
 import { createUploadsFolder } from "./src/security/helper.js";
 import eventRoute from "./src/route/eventRoute.js";
 import applicationRoute from "./src/route/applicationRoute.js";
+import notificationRoute from "./src/route/notificationRoute.js"; 
 
 // IMPORT MODELS FOR ASSOCIATIONS
 import User from "./src/model/userModel.js";
 import Event from "./src/model/eventModel.js";
 import Application from "./src/model/applicationModel.js";
 import Donor from "./src/model/donorModel.js";
+import Notification from "./src/model/notificationModel.js";
 
 dotenv.config();
 
@@ -41,6 +43,9 @@ Application.belongsTo(Event, { foreignKey: 'eventId' });
 User.hasMany(Donor, { foreignKey: 'userId', as: 'donors' });
 Donor.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
@@ -60,6 +65,7 @@ app.use("/api/profile", profileRoute);
 app.use("/api/donor", donorRoute);
 app.use("/api/events", eventRoute);
 app.use("/api/applications", applicationRoute);
+app.use("/api/notifications", notificationRoute);
 
 
 createUploadsFolder();
