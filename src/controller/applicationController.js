@@ -61,3 +61,33 @@ export const updateStatus = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
+// 4. Get user's personal history
+export const getUserHistory = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const userApplications = await Application.findAll({
+      where: { userId },
+      include: [
+        { model: Event, as: 'event', attributes: ['id', 'eventName', 'eventDate', 'location', 'eventType'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    if (userApplications.length === 0) {
+      return res.status(200).json({ 
+        message: "No history found", 
+        history: [] 
+      });
+    }
+
+    res.status(200).json({ 
+      message: "User history retrieved successfully",
+      history: userApplications 
+    });
+  } catch (error) {
+    console.error("Error fetching user history:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
